@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Configuration Reader that reads properties from config file
@@ -39,10 +40,10 @@ public class ConfigurationReader {
     private static final Logger log = LoggerFactory.getLogger(ConfigurationReader.class);
     private static Properties properties;
     private final File extensionHomeFolder;
-    private static final Object lock = new Object();
 
     public ConfigurationReader(final @NotNull ExtensionInformation extensionInformation) {
         this.extensionHomeFolder = extensionInformation.getExtensionHomeFolder();
+        log.info("home folder : {}", extensionHomeFolder);
         ConfigFactory.setProperty("configFile", new File(extensionHomeFolder, CONFIG_PATH).getAbsolutePath());
     }
 
@@ -64,19 +65,19 @@ public class ConfigurationReader {
 //    }
 
     public String get(String key){
-        synchronized (lock){
-            if(properties == null){
-                final File propertiesFile = new File(extensionHomeFolder, CONFIG_PATH);
-                try (final InputStream inputStream = new FileInputStream(propertiesFile)) {
-                    final Properties properties = new Properties();
-                    properties.load(inputStream);
-                    ConfigurationReader.properties = properties;
-                }catch (IOException e) {
-                    log.warn("No dnsdiscovery.properties file found. Use default settings");
-                    throw new RuntimeException(e);
+        if(properties == null){
+            final File propertiesFile = new File(extensionHomeFolder, CONFIG_PATH);
+            try (final InputStream inputStream = new FileInputStream(propertiesFile)) {
+                properties = new Properties();
+                properties.load(inputStream);
+                for(Object obk : properties.keySet()){
+                    log.info("properties loaded : {} - {}", obk, properties.get(obk));
                 }
+            }catch (IOException e) {
+                log.warn("No simple-auth.properties file found. Use default settings");
+                throw new RuntimeException(e);
             }
-            return properties.get(key).toString();
         }
+        return properties.getProperty(key, null);
     }
 }

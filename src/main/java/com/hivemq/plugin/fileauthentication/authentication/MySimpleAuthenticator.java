@@ -9,11 +9,15 @@ import com.hivemq.extension.sdk.api.auth.parameter.*;
 import com.hivemq.extension.sdk.api.packets.connect.ConnectPacket;
 import com.hivemq.plugin.fileauthentication.configuration.ConfigurationReader;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
 public class MySimpleAuthenticator implements SimpleAuthenticator, EnhancedAuthenticator, SubscriptionAuthorizer, PublishAuthorizer {
+
+    private static Logger logger = LoggerFactory.getLogger(MySimpleAuthenticator.class);
 
     private ConfigurationReader configurationReader;
 
@@ -65,9 +69,12 @@ public class MySimpleAuthenticator implements SimpleAuthenticator, EnhancedAuthe
             byte[] bytes = new byte[byteBuffer.capacity()];
             byteBuffer.get(bytes);
             String password = new String(bytes);
+            logger.info("connect : {} - {}", userName, password);
             if(StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)){
                 String expectedPassword = configurationReader.get(userName);
-                return password.equals(expectedPassword);
+                boolean result = password.equals(expectedPassword);
+                logger.info("{} - {} : {}", password, expectedPassword, result);
+                return result;
             }
         }
         return false;
